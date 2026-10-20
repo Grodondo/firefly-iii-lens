@@ -346,11 +346,17 @@
       live.forEach(n => { n.v = Math.max(n.in, n.out); });
       const layers = [[], [], []]; live.forEach(n => layers[n.layer].push(n));
       const narrow = W < 640, labelW = narrow ? 86 : Math.min(190, W * 0.21), gap = narrow ? 7 : 11, nodeW = 12;
-      const H = o.height || Math.max(380, Math.max.apply(null, layers.map(l => l.length)) * 30);
+      const H = o.height || Math.max(420, Math.max.apply(null, layers.map(l => l.length)) * 36);
       const mt = 8, ph = H - 16;
       let scale = Infinity;
-      layers.forEach(l => { if (!l.length) return; const sum = l.reduce((a, n) => a + n.v, 0), avail = Math.max(ph - gap * (l.length - 1), 60); if (sum > 0) scale = Math.min(scale, avail / sum); });
-      if (!isFinite(scale)) scale = 1;
+      layers.forEach(l => {
+        if (!l.length) return;
+        const fit = s => l.reduce((a, n) => a + Math.max(n.v * s, 14), 0) + gap * (l.length - 1) <= ph;
+        let lo = 0, hi = 1e6;
+        for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2; if (fit(mid)) lo = mid; else hi = mid; }
+        scale = Math.min(scale, lo);
+      });
+      if (!isFinite(scale) || scale <= 0) scale = 1e-4;
       layers[1].sort((a, b) => b.v - a.v).forEach((n, i) => { n.ord = i; });
       [0, 2].forEach(L => {
         layers[L].forEach(n => {
@@ -360,9 +366,10 @@
         layers[L].sort((a, b) => (a.special ? 1 : 0) - (b.special ? 1 : 0) || a.bary - b.bary || b.v - a.v);
       });
       layers.forEach(l => {
-        const tot = l.reduce((a, n) => a + Math.max(n.v * scale, 2), 0) + gap * Math.max(0, l.length - 1);
+        const slot = n => Math.max(n.v * scale, 14);
+        const tot = l.reduce((a, n) => a + slot(n), 0) + gap * Math.max(0, l.length - 1);
         let y = mt + Math.max(0, (ph - tot) / 2);
-        l.forEach(n => { n.y = y; n.h = Math.max(n.v * scale, 2); y += n.h + gap; });
+        l.forEach(n => { n.h = Math.max(n.v * scale, 2); n.y = y + (slot(n) - n.h) / 2; y += slot(n) + gap; });
       });
       const xs = [labelW, (labelW + W - labelW - nodeW) / 2, W - labelW - nodeW];
       layers.forEach((l, i) => l.forEach(n => { n.x = xs[i]; }));
@@ -418,11 +425,16 @@
       const w = left + weeks * step + 4, h = top + 7 * step;
       const svg = S('svg', { width: w, height: h, class: 'chart' }, host);
       ['Mon', 'Wed', 'Fri'].forEach((d, i) => { const t = S('text', { x: left - 6, y: top + i * 2 * step + cell - 2, 'text-anchor': 'end', class: 'ax' }, svg); t.textContent = d; });
-      let lastM = -1, max = 0;
+      let lastM = -1, lastWk = -9, max = 0;
       o.values.forEach(v => { if (v > max) max = v; });
       for (let wk = 0; wk < weeks; wk++) {
         const mon = new Date((first + wk * 7) * FF.DAY).getUTCMonth();
-        if (mon !== lastM) { lastM = mon; const t = S('text', { x: left + wk * step, y: 11, class: 'ax' }, svg); t.textContent = FF.fmtDate(first + wk * 7, 'my').split(' ')[0]; }
+        if (mon !== lastM) {
+          lastM = mon;
+          if (wk - lastWk < 3) continue;
+          lastWk = wk;
+          const t = S('text', { x: left + wk * step, y: 11, class: 'ax' }, svg); t.textContent = FF.fmtDate(first + wk * 7, 'my').split(' ')[0];
+        }
       }
       for (let day = o.from; day <= o.to; day++) {
         const wk = Math.floor((day - first) / 7), r = FF.weekday(day), v = o.values.get(day) || 0;

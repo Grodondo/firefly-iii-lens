@@ -1,50 +1,83 @@
 # Firefly Lens
 
-An interactive viewer for [Firefly III](https://www.firefly-iii.org/) transaction exports. It turns the CSV export into charts and tables for seeing where your money is and where it goes, without running another server or container.
+Firefly Lens is a small tool for looking at your [Firefly III](https://www.firefly-iii.org/) finances in a clearer, more visual way. You give it the CSV file exported from Firefly III and it shows where your money is, where it comes from and where it goes, with charts you can click, filter and zoom.
 
-Everything runs locally in the browser. The CSV is read on your machine and never uploaded or stored.
+It runs entirely in your web browser. There is nothing to install, no server and no Docker. Your data stays on your computer and is never uploaded.
 
-## Usage
+![Overview](docs/screenshots/overview.png)
 
-1. In Firefly III, export your transactions as CSV (**Export data**).
-2. Open `index.html` in a browser (double-click it). No install, build step or internet connection is needed.
-3. Drop the CSV onto the page, or click to choose it. Several files can be loaded at once and are merged.
-4. Explore, then close the tab. Use **Open CSV** in the top bar to load another file.
+![Cash flow](docs/screenshots/cash-flow.png)
 
-## Views
+![Spending](docs/screenshots/spending.png)
 
-| View | Shows |
-| --- | --- |
-| Overview | KPIs vs. the previous period, net worth over time, income vs. expenses, spending breakdown |
-| Accounts | Balance per account, balances over time, activity and transfers |
-| Cash flow | Sankey diagram: income source → account → spending |
-| Spending & income | Treemap, ranking, trend, daily calendar, weekday averages, group table |
-| Insights | Recurring payments, month-end projection, spending pace, monthly summary |
-| Transactions | Sortable table, detail panel, export of the filtered rows to CSV |
+*The screenshots use the fake data in `sample/demo_transactions.csv`.*
 
-## Interacting
+## Getting started
 
-- **Filter:** use the sidebar (period, accounts, categories, tags, bills, budgets) or the search box. Active filters appear as chips that can be removed individually.
-- **Click** a chart element, legend entry or list row to filter by it. Every view updates.
+### 1. Get the app
+
+Choose **one** of these two ways.
+
+**Option A: download a ZIP (easiest)**
+
+1. On the GitHub page of this project, click the green **Code** button, then **Download ZIP**.
+2. Open the downloaded file and extract (unzip) it to any folder.
+
+**Option B: clone with Git**
+
+"Cloning" simply means downloading a copy of the project with a tool called Git.
+
+1. Install Git from [git-scm.com](https://git-scm.com/downloads) if you don't have it yet.
+2. On the GitHub page of this project, click the green **Code** button and copy the web address (HTTPS) shown there.
+3. Open a terminal: **Terminal** on macOS or Linux, **PowerShell** or **Command Prompt** on Windows.
+4. Go to the folder where you want the project, for example `cd Documents`.
+5. Type `git clone`, a space, paste the address you copied, and press Enter:
+
+   ```
+   git clone <paste-the-address-here>
+   ```
+
+   This creates a new folder with the project inside it.
+
+### 2. Open it
+
+Open the project folder and double-click **`index.html`**. It opens in your normal web browser (Chrome, Edge, Firefox or Safari).
+
+### 3. Load some data
+
+- **Just want to look around?** Drop the file `sample/demo_transactions.csv` onto the page. It contains made-up data.
+- **Want to see your own finances?** In Firefly III, open **Options → Export data** and download your transactions as a CSV file, then drop that file onto the page (or click **Choose CSV file**). You can load several files at once.
+
+### 4. Explore, then close
+
+Use the tabs at the top (Overview, Accounts, Cash flow, Spending & income, Insights, Transactions). When you are done, just close the browser tab. To look at another file, click **Open CSV** in the top bar.
+
+## Tips
+
+- **Filter** with the panel on the left (period, accounts, categories, tags, bills, budgets) or the search box. Active filters show up as chips at the top that you can remove with one click.
+- **Click** a bar, slice, tile or list entry to filter by it. Every chart updates.
 - **Drag** across a time chart to zoom into that period.
-- **Group by:** the Spending & income view and several chart headers can group by category, tag, budget, bill, payee, description, account or weekday.
+- **Click a transaction** to see all its details, or use **Export filtered CSV** on the Transactions tab to save what you are looking at.
 
-## Notes
+## Good to know
 
 - Opening balances count towards balances and net worth, but not towards income or expenses.
-- One currency is shown at a time. Use the currency selector in the sidebar if the export contains several.
 - Transfers between your own accounts are not counted as income or spending.
-- Browsers with `Intl` and CSS `color-mix` support are required (any current Chrome, Edge, Firefox or Safari).
+- If your export contains more than one currency, pick one in the left panel. One currency is shown at a time.
+- Any recent version of Chrome, Edge, Firefox or Safari works.
 
-## Project layout
+## For developers
+
+Plain HTML, CSS and JavaScript with no build step and no dependencies. Charts are drawn by the project's own code.
 
 ```
 index.html        page shell
 css/styles.css    styling (light and dark themes)
 js/csv.js         CSV parser
 js/model.js       data normalisation, filtering and aggregation
-js/charts.js      dependency-free SVG/HTML charts
+js/charts.js      SVG/HTML charts
 js/views.js       Overview, Accounts, Cash flow
 js/views2.js      Spending & income, Insights, Transactions
 js/app.js         state, sidebar, filters, file loading
+sample/           fake demo data
 ```

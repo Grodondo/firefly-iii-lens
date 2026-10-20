@@ -1,0 +1,4 @@
+# Personal exports stay out of the repository; only the demo file is shared.
+*.csv
+!sample/demo_transactions.csv
+.playwright-mcp/

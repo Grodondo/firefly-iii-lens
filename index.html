@@ -16,19 +16,25 @@
 <body>
 
 <section id="import" class="import">
-  <div class="import-card">
-    <div class="logo-lg">
-      <svg viewBox="0 0 32 32" width="40" height="40" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#4f46e5"/><rect x="8" y="16" width="4" height="8" rx="1" fill="#fff"/><rect x="14" y="11" width="4" height="13" rx="1" fill="#fff"/><rect x="20" y="7" width="4" height="17" rx="1" fill="#fff"/></svg>
-      <h1>Firefly Lens</h1>
+  <div class="import-wrap">
+    <div class="import-brand">
+      <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#4f46e5"/><rect x="8" y="16" width="4" height="8" rx="1" fill="#fff"/><rect x="14" y="11" width="4" height="13" rx="1" fill="#fff"/><rect x="20" y="7" width="4" height="17" rx="1" fill="#fff"/></svg>
+      <span>Firefly Lens</span>
     </div>
-    <p class="lead">Explore your Firefly III transaction export: balances, cash flow, spending and trends, all interactive.</p>
+    <h1>Explore your Firefly III data</h1>
+    <p class="lead">Load a transaction export to see balances, cash flow and spending in interactive charts.</p>
     <label id="drop" class="drop" tabindex="0">
-      <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
-      <strong>Drop your CSV export here</strong>
-      <span>or click to choose one or more files</span>
+      <span class="drop-title">Drop your CSV export here</span>
+      <span class="drop-or">or</span>
+      <span class="drop-btn">Choose CSV file</span>
     </label>
     <p id="import-error" class="import-error" hidden></p>
-    <p class="privacy">Everything runs locally in your browser. Nothing is uploaded or stored.</p>
+    <ol class="steps">
+      <li><b>Export</b>In Firefly III, open Export and download your transactions as CSV.</li>
+      <li><b>Load</b>Drop the file above. You can load several files at once.</li>
+      <li><b>Explore</b>Filter, zoom and click through the charts. Close the tab when done.</li>
+    </ol>
+    <p class="privacy">Your file is read locally in this browser. Nothing is uploaded or stored.</p>
   </div>
 </section>
 

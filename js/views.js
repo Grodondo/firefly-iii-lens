@@ -103,7 +103,7 @@
       yFmt: axis, xTick: U.tickFmt(c), xFull: d => FF.fmtDate(d, 'long'), onBrush: FF.setRange
     });
     FF.charts.bars(root.querySelector('#c-flow'), {
-      cats: c.buckets, height: 350, yFmt: axis,
+      cats: c.buckets, height: 430, yFmt: axis,
       series: [{ name: 'Income', color: GOOD, values: Bi }, { name: 'Expenses', color: BAD, values: Be }],
       line: { name: 'Net', color: INFO, values: Bi.map((v, i) => v - Be[i]) },
       onClick: i => FF.setRange(Math.max(c.from, c.buckets[i].start), Math.min(c.to, c.buckets[i].end))
