@@ -172,7 +172,9 @@
     const c = FF.ctx, T = S.tx;
     const rows = (T.kind === 'all' ? c.txs : c.txs.filter(t => t.kind === T.kind));
     const out = [['date', 'time', 'type', 'description', 'amount', 'currency', 'source', 'destination', 'category', 'budget', 'bill', 'tags', 'notes']];
-    rows.forEach(t => out.push([t.date, t.time, t.typeRaw, t.desc, t.amount, t.cur, t.src, t.dst, t.category, t.budget, t.bill, t.tags.join(','), t.notes]));
+    // Text starting with = + - @ would run as a formula in Excel/Sheets; amounts stay numeric.
+    const safe = v => typeof v === 'string' && /^[=+\-@\t\r]/.test(v) ? "'" + v : v;
+    rows.forEach(t => out.push([t.date, t.time, t.typeRaw, t.desc, t.amount, t.cur, t.src, t.dst, t.category, t.budget, t.bill, t.tags.join(','), t.notes].map(safe)));
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob(['\ufeff' + FF.toCSV(out)], { type: 'text/csv' }));
     a.download = 'filtered_transactions_' + FF.dayStr(Math.floor(Date.now() / FF.DAY)) + '.csv';
