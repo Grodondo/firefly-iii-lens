@@ -62,7 +62,7 @@
 
   function renderMeta(c) {
     const ds = S.ds;
-    $('#meta').textContent = ds.txs.length + ' transactions · ' + FF.fmtDate(ds.range[S.cur].min, 'mdy') + ' – ' + FF.fmtDate(ds.range[S.cur].max, 'mdy');
+    $('#meta').textContent = ds.txs.length + ' transactions · ' + FF.fmtDate(ds.range[S.cur].min, 'mdy') + ' – ' + FF.fmtDate(ds.range[S.cur].max, 'mdy') + (FF.skipped ? ' · ' + FF.skipped + ' unreadable row' + (FF.skipped === 1 ? '' : 's') + ' skipped' : '');
   }
 
   function renderTabs() {

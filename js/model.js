@@ -49,11 +49,13 @@
 
   FF.normalize = function (objs) {
     const out = [], seen = new Set();
+    FF.skipped = 0;
     for (const o of objs) {
+      // Firefly prefixes values starting with = + - @ with ' to prevent CSV formula injection (e.g. '-14.50).
+      for (const k in o) { const v = o[k]; if (v.charCodeAt(0) === 39 && /^'[=+\-@\t\r]/.test(v)) o[k] = v.slice(1); }
       const date = (o.date || '').trim().slice(0, 10);
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
       const amount = parseFloat(o.amount);
-      if (!isFinite(amount)) continue;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !isFinite(amount)) { FF.skipped++; continue; }
       const sig = [o.journal_id, o.date, o.amount, o.description, o.source_name, o.destination_name].join('|');
       if (seen.has(sig)) continue;
       seen.add(sig);
