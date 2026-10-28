@@ -140,7 +140,13 @@
       const ov = S('rect', { x: m.l, y: m.t, width: pw, height: ph, fill: 'transparent' }, svg);
       if (o.onBrush) ov.style.cursor = 'crosshair';
       const px = ev => clamp(ev.clientX - svg.getBoundingClientRect().left, m.l, m.l + pw);
-      const idxAt = p => n === 1 ? 0 : clamp(Math.round((p - m.l) / pw * (n - 1)), 0, n - 1);
+      const idxAt = p => {
+        if (n === 1) return 0;
+        const v = x0 + (p - m.l) / pw * (x1 - x0);
+        let lo = 0, hi = n - 1;
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (xs[mid] < v) lo = mid + 1; else hi = mid; }
+        return lo > 0 && v - xs[lo - 1] < xs[lo] - v ? lo - 1 : lo;
+      };
       let drag = null;
 
       function hover(ev) {
@@ -161,6 +167,7 @@
         rows.slice(0, 12).forEach(r => { html += tipRow(r.s.color, r.s.name, yFmt(r.v, true)); });
         if (rows.length > 12) html += '<div class="tt-more">+' + (rows.length - 12) + ' more</div>';
         if (o.stacked && rows.length > 1) html += tipRow(null, 'Total', yFmt(total, true), true);
+        if (o.tipExtra) html += o.tipExtra(i);
         FF.tip.show(html, ev);
       }
       function leave() {

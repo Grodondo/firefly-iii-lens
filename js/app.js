@@ -6,7 +6,7 @@
   const freshDims = () => { const d = {}; FF.DIM_ORDER.forEach(k => { d[k] = new Set(); }); return d; };
   const S = FF.S = {
     ds: null, cur: null, range: { preset: 'all', from: null, to: null }, dims: freshDims(), q: '', view: 'overview', gran: 'auto',
-    ovBy: 'category', explore: { flow: 'expense', by: 'category' }, flow: { inBy: 'payee', outBy: 'category', transfers: false },
+    ovBy: 'category', nwMode: 'total', nwGran: 'auto', explore: { flow: 'expense', by: 'category' }, flow: { inBy: 'payee', outBy: 'category', transfers: false },
     tx: { kind: 'all', sort: 'date', dir: -1, page: 0, size: 50 }, ui: { search: {}, open: { account: true, category: true } }
   };
   FF.acts = {}; FF.changes = {};
@@ -143,6 +143,8 @@
   const change = (name, fn) => { FF.changes[name] = (v, el) => { fn(v, el); S.tx.page = 0; FF.render(); }; };
   change('gran', v => { S.gran = v; });
   change('ovBy', v => { S.ovBy = v; });
+  change('nwMode', v => { S.nwMode = v; });
+  change('nwGran', v => { S.nwGran = v; });
   change('exFlow', v => { S.explore.flow = v; });
   change('exBy', v => { S.explore.by = v; });
   change('flowIn', v => { S.flow.inBy = v; });

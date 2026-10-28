@@ -89,8 +89,36 @@
     const top = c.txs.filter(t => t.kind === 'expense').sort((a, b) => b.mag - a.mag).slice(0, 6);
     const latest = c.txs.filter(t => t.kind !== 'opening').slice(-6).reverse();
 
+    // Net worth chart: one point per bucket, with the transactions behind each point for the tooltip.
+    const nwGran = S.nwGran === 'auto' ? (c.days <= 120 ? 'day' : c.days <= 450 ? 'week' : 'month') : S.nwGran;
+    const nwB = FF.makeBuckets(c.from, c.to, nwGran), nwDays = nwB.map(b => Math.min(b.end, c.to));
+    const byAcc = S.nwMode === 'accounts';
+    const nwSeries = byAcc
+      ? bal.names.map((n, i) => ({ name: n, color: FF.color('account', n), values: nwDays.map(d => bal.vals[i][d - c.from]) }))
+      : [{ name: c.sel ? 'Balance' : 'Net worth', color: ACCENT, values: nwDays.map(d => bal.total[d - c.from]) }];
+    const inSel = n => !c.sel || c.sel.has(n);
+    const nwTx = nwB.map(() => ({ list: [], internal: 0, net: 0 }));
+    for (const t of c.base) {
+      if (t.day < c.from || t.day > c.to) continue;
+      const b = nwTx[nwB.idx(t.day)], eff = (t.dstOwned && inSel(t.dst) ? t.mag : 0) - (t.srcOwned && inSel(t.src) ? t.mag : 0);
+      if (eff) { b.list.push({ t, eff }); b.net += eff; } else if (t.kind === 'transfer') b.internal++;
+    }
+    const signed = v => (v >= 0 ? '+' : '\u2212') + money(Math.abs(v));
+    const nwTip = i => {
+      const b = nwTx[i];
+      if (!b.list.length && !b.internal) return '<div class="tt-sep"></div><div class="tt-more">No transactions</div>';
+      let h = '<div class="tt-sep"></div>';
+      if (b.list.length) h += FF.charts.tipRow(null, 'Change', signed(b.net), true);
+      b.list.slice().sort((x, y) => Math.abs(y.eff) - Math.abs(x.eff)).slice(0, 8).forEach(r => { h += FF.charts.tipRow(null, r.t.desc.length > 30 ? r.t.desc.slice(0, 29) + '\u2026' : r.t.desc || '(no description)', signed(r.eff)); });
+      if (b.list.length > 8) h += '<div class="tt-more">+' + (b.list.length - 8) + ' more</div>';
+      if (b.internal) h += '<div class="tt-more">' + b.internal + ' transfer' + (b.internal === 1 ? '' : 's') + ' between your accounts</div>';
+      return h;
+    };
+
     root.innerHTML = '<div class="kpis">' + kpis.map(U.kpi).join('') + '</div><div class="grid">' +
-      U.card({ cls: 'span-8', title: c.sel ? 'Balance over time' : 'Net worth over time', sub: 'Drag on the chart to zoom into a period', body: '<div id="c-nw"></div>' }) +
+      U.card({ cls: 'span-8', title: c.sel ? 'Balance over time' : 'Net worth over time', sub: 'Hover for the transactions behind each point \u00b7 drag to zoom',
+        actions: U.seg('nwMode', [{ v: 'total', l: 'Total' }, { v: 'accounts', l: 'By account' }], S.nwMode) + '<label class="inline">Detail ' + U.select('nwGran', [{ v: 'auto', l: 'Auto' }, { v: 'day', l: 'Daily' }, { v: 'week', l: 'Weekly' }, { v: 'month', l: 'Monthly' }], S.nwGran) + '</label>',
+        body: '<div id="c-nw"></div>' + (byAcc ? '<div class="legend">' + bal.names.map(n => '<span>' + U.dot(FF.color('account', n)) + esc(n) + '</span>').join('') + '</div>' : '') }) +
       U.card({ cls: 'span-4', title: 'Where your money is', sub: 'Balance per account at ' + FF.fmtDate(c.to, 'mdy'), body: accItems.length ? '<div id="c-acc" class="center"></div>' + U.breakdown(accItems, { dim: 'account', total: posTotal, fmt: money }) : U.empty('No accounts') }) +
       U.card({ cls: 'span-8', title: 'Money in vs. out', sub: 'Click a bar to zoom into that ' + c.buckets.g, actions: U.select('gran', [{ v: 'auto', l: 'Auto' }, { v: 'day', l: 'Daily' }, { v: 'week', l: 'Weekly' }, { v: 'month', l: 'Monthly' }], S.gran), body: '<div id="c-flow"></div><div class="legend"><span>' + U.dot(GOOD) + 'Income</span><span>' + U.dot(BAD) + 'Expenses</span><span>' + U.dot(INFO) + 'Net</span></div>' }) +
       U.card({ cls: 'span-4', title: 'Where it goes', actions: U.select('ovBy', U.dimOptions(['category', 'tag', 'budget', 'bill', 'payee', 'description', 'account']), by), body: items.length ? '<div id="c-by" class="center"></div>' + U.breakdown(items, { dim: by, total: baseTotal, fmt: money }) : U.empty('No expenses in this period') }) +
@@ -99,8 +127,8 @@
       '</div>';
 
     FF.charts.timeSeries(root.querySelector('#c-nw'), {
-      xs: bal.xs, series: [{ name: c.sel ? 'Balance' : 'Net worth', color: ACCENT, values: bal.total }], area: true, height: 330,
-      yFmt: axis, xTick: U.tickFmt(c), xFull: d => FF.fmtDate(d, 'long'), onBrush: FF.setRange
+      xs: nwDays, series: nwSeries, stacked: byAcc, area: true, height: 330, tipExtra: nwTip,
+      yFmt: axis, xTick: U.tickFmt(c), xFull: d => nwGran === 'day' ? FF.fmtDate(d, 'long') : nwB[nwB.idx(d)].full, onBrush: FF.setRange
     });
     FF.charts.bars(root.querySelector('#c-flow'), {
       cats: c.buckets, height: 430, yFmt: axis,
