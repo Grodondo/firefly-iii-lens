@@ -340,7 +340,7 @@
     });
   };
 
-  /* ---------- sankey (3 fixed layers) ---------- */
+  /* ---------- sankey (layered; layer 0 = sources, last = destinations) ---------- */
   C.sankey = function (host, o) {
     C.mount(host, W => {
       host.innerHTML = '';
@@ -351,7 +351,8 @@
       links.forEach(l => { l.s.out += l.value; l.t.in += l.value; l.s.sOut.push(l); l.t.sIn.push(l); });
       const live = nodes.filter(n => n.in || n.out);
       live.forEach(n => { n.v = Math.max(n.in, n.out); });
-      const layers = [[], [], []]; live.forEach(n => layers[n.layer].push(n));
+      const nL = Math.max.apply(null, live.map(n => n.layer)) + 1;
+      const layers = Array.from({ length: nL }, () => []); live.forEach(n => layers[n.layer].push(n));
       const narrow = W < 640, labelW = narrow ? 86 : Math.min(190, W * 0.21), gap = narrow ? 7 : 11, nodeW = 12;
       const H = o.height || Math.max(420, Math.max.apply(null, layers.map(l => l.length)) * 36);
       const mt = 8, ph = H - 16;
@@ -364,10 +365,10 @@
         scale = Math.min(scale, lo);
       });
       if (!isFinite(scale) || scale <= 0) scale = 1e-4;
-      layers[1].sort((a, b) => b.v - a.v).forEach((n, i) => { n.ord = i; });
-      [0, 2].forEach(L => {
+      for (let L = 1; L < nL - 1; L++) layers[L].sort((a, b) => b.v - a.v).forEach((n, i, arr) => { n.ord = i / arr.length; });
+      [0, nL - 1].forEach(L => {
         layers[L].forEach(n => {
-          let w = 0, s = 0; (L === 0 ? n.sOut : n.sIn).forEach(l => { s += (L === 0 ? l.t : l.s).ord * l.value; w += l.value; });
+          let w = 0, s = 0; (L === 0 ? n.sOut : n.sIn).forEach(l => { const m = L === 0 ? l.t : l.s; s += (m.ord === undefined ? 0.5 : m.ord) * l.value; w += l.value; });
           n.bary = w ? s / w : 99;
         });
         layers[L].sort((a, b) => (a.special ? 1 : 0) - (b.special ? 1 : 0) || a.bary - b.bary || b.v - a.v);
@@ -378,7 +379,7 @@
         let y = mt + Math.max(0, (ph - tot) / 2);
         l.forEach(n => { n.h = Math.max(n.v * scale, 2); n.y = y + (slot(n) - n.h) / 2; y += slot(n) + gap; });
       });
-      const xs = [labelW, (labelW + W - labelW - nodeW) / 2, W - labelW - nodeW];
+      const xs = layers.map((_, i) => nL === 1 ? labelW : labelW + i * (W - 2 * labelW - nodeW) / (nL - 1));
       layers.forEach((l, i) => l.forEach(n => { n.x = xs[i]; }));
       links.forEach(l => { l.w = l.value * scale; });
       live.forEach(n => {
@@ -390,7 +391,7 @@
       links.forEach(l => {
         const x0 = l.s.x + nodeW, x1 = l.t.x, xm = (x0 + x1) / 2;
         l.el = S('path', { d: 'M' + x0 + ',' + l.y0 + 'C' + xm + ',' + l.y0 + ' ' + xm + ',' + l.y1 + ' ' + x1 + ',' + l.y1, fill: 'none', stroke: l.color || (l.s.layer === 0 ? l.s.color : l.t.color), 'stroke-width': Math.max(1, l.w), class: 'sk-link' }, gl);
-        l.el.addEventListener('pointermove', ev => { mark([l], [l.s, l.t]); FF.tip.show('<div class="tt-h">' + esc(l.s.name) + ' → ' + esc(l.t.name) + '</div>' + tipRow(null, o.fmt(l.value, true), ''), ev); });
+        l.el.addEventListener('pointermove', ev => { mark([l], [l.s, l.t]); FF.tip.show('<div class="tt-h">' + esc(l.s.name) + ' → ' + esc(l.t.name) + '</div>' + tipRow(null, o.fmt(l.value, true), '') + (l.tip || ''), ev); });
         l.el.addEventListener('pointerleave', clear);
       });
       function mark(ls, ns) { svg.classList.add('hl'); ls.forEach(l => l.el.classList.add('on')); ns.forEach(n => n.el.classList.add('on')); }
@@ -406,7 +407,7 @@
           const t2 = S('text', { x: left ? n.x - 7 : n.x + nodeW + 7, y: n.y + n.h / 2 + 17, 'text-anchor': left ? 'end' : 'start', class: 'sk-sub' }, n.el);
           t2.textContent = o.fmt(n.v);
         }
-        const hit = S('rect', { x: left ? n.x - labelW + 4 : n.x, y: n.y - 2, width: left ? labelW - 4 + nodeW : (n.layer === 2 ? labelW + nodeW : nodeW), height: n.h + 4, fill: 'transparent' }, n.el);
+        const hit = S('rect', { x: left ? n.x - labelW + 4 : n.x, y: n.y - 2, width: left ? labelW - 4 + nodeW : (n.layer === nL - 1 ? labelW + nodeW : nodeW), height: n.h + 4, fill: 'transparent' }, n.el);
         if (n.dim) hit.style.cursor = 'pointer';
         hit.addEventListener('pointermove', ev => {
           clear(); mark(n.sIn.concat(n.sOut), [n]);
