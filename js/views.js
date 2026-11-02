@@ -221,7 +221,7 @@
         const ks = outD.keys(t), share = t.mag / ks.length;
         for (const k0 of ks) add(expL, t.src + SEP + (keepOut.has(k0) ? k0 : '__other'), share);
         expTot += t.mag;
-      } else if (t.kind === 'transfer' && F.transfers) {
+      } else if (t.kind === 'transfer' && F.transfers !== 'off') {
         const sS = t.srcOwned && shown(t.src), dS = t.dstOwned && shown(t.dst);
         if (sS && dS) {
           const k = t.src + SEP + t.dst, g = tfG.get(k) || { src: t.src, dst: t.dst, v: 0, cats: new Map() };
@@ -242,9 +242,9 @@
       else if (net < -0.005) edges.push({ s: rev.src, d: rev.dst, v: -net, cats: rev.cats, back: g.v });
     }
     edges.sort((a, b) => b.v - a.v);
-    const adj = new Map(), used = [];
+    const adj = new Map(), linked = F.transfers === 'link', used = linked ? [] : edges;
     const reaches = (a, b, seen) => { seen = seen || new Set(); if (a === b) return true; if (seen.has(a)) return false; seen.add(a); return (adj.get(a) || []).some(x => reaches(x, b, seen)); };
-    for (const e of edges) {
+    if (linked) for (const e of edges) {
       if (reaches(e.d, e.s)) continue;
       if (!adj.has(e.s)) adj.set(e.s, []);
       adj.get(e.s).push(e.d); used.push(e);
@@ -260,7 +260,7 @@
 
     const preds = new Map(), memo = new Map();
     used.forEach(e => { if (!preds.has(e.d)) preds.set(e.d, []); preds.get(e.d).push(e.s); });
-    const depth = a => { if (!memo.has(a)) memo.set(a, (preds.get(a) || []).reduce((m, p) => Math.max(m, depth(p) + 1), 0)); return memo.get(a); };
+    const depth = a => { if (!linked) return 0; if (!memo.has(a)) memo.set(a, (preds.get(a) || []).reduce((m, p) => Math.max(m, depth(p) + 1), 0)); return memo.get(a); };
     let maxD = 0; accs.forEach(a => { maxD = Math.max(maxD, depth(a)); });
     const R = maxD + 2;
 
@@ -282,7 +282,11 @@
       let tip = '';
       if (cats.some(x => x[0])) tip += '<div class="tt-sep"></div><div class="tt-more">Category</div>' + cats.map(x => FF.charts.tipRow(null, x[0] || 'No category', fmt(x[1], true))).join('');
       if (e.back) tip += '<div class="tt-more">Net of ' + esc(fmt(e.back, true)) + ' moved back</div>';
-      link(acctNode(e.s), acctNode(e.d), e.v, TRANSFER, tip);
+      if (linked) link(acctNode(e.s), acctNode(e.d), e.v, TRANSFER, tip);
+      else {
+        link(acctNode(e.s), node('R:tf:' + e.d, 'Transfer to ' + e.d, R, TRANSFER, { special: 1 }), e.v, TRANSFER, tip);
+        link(node('L:tf:' + e.s, 'Transfer from ' + e.s, 0, TRANSFER, { special: 1 }), acctNode(e.d), e.v, TRANSFER, tip);
+      }
     });
     extIn.forEach((v, a) => link(node('L:__tin', 'Transfers in (other accounts)', 0, '#64748b', { special: 1 }), acctNode(a), v, '#64748b'));
     extOut.forEach((v, a) => link(acctNode(a), node('R:__tout', 'Transfers out (other accounts)', R, '#64748b', { special: 1 }), v, '#64748b'));
@@ -294,10 +298,10 @@
     const movedTot = used.reduce((s, e) => s + e.v, 0);
     root.innerHTML = '<div class="grid">' + U.card({
       cls: 'span-12', title: 'Where your money comes from and where it goes',
-      sub: 'Income → accounts → spending, with transfers between accounts and what stays saved in each one. Hover to trace a flow, click a node to filter.',
+      sub: 'Income → accounts → spending and savings. Transfers between your own accounts are shown in blue. Hover to trace a flow, click a node to filter.',
       actions: '<label class="inline">Income by ' + U.select('flowIn', U.dimOptions(['payee', 'category', 'description', 'tag']), F.inBy) + '</label>' +
         '<label class="inline">Spending by ' + U.select('flowOut', U.dimOptions(['category', 'tag', 'budget', 'bill', 'payee', 'description']), F.outBy) + '</label>' +
-        '<label class="inline check"><input type="checkbox" data-change="flowTr"' + (F.transfers ? ' checked' : '') + '> Transfers</label>',
+        '<label class="inline">Transfers ' + U.select('flowTr', [{ v: 'side', l: 'Shown separately' }, { v: 'link', l: 'Between accounts' }, { v: 'off', l: 'Hidden' }], F.transfers) + '</label>',
       body: '<div id="c-sankey"></div><div class="summary"><div><span>Income</span><b class="pos">' + esc(fmt(incTot)) + '</b></div><div><span>Spent</span><b class="neg">' + esc(fmt(expTot)) + '</b></div><div><span>Net</span><b>' + esc(fmt(incTot - expTot)) + '</b></div>' + (movedTot ? '<div><span>Moved between accounts</span><b>' + esc(fmt(movedTot)) + '</b></div>' : '') + '</div>'
     }) + '</div>';
     FF.charts.sankey(root.querySelector('#c-sankey'), {

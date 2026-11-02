@@ -6,7 +6,7 @@
   const freshDims = () => { const d = {}; FF.DIM_ORDER.forEach(k => { d[k] = new Set(); }); return d; };
   const S = FF.S = {
     ds: null, cur: null, range: { preset: 'all', from: null, to: null }, dims: freshDims(), q: '', view: 'overview', gran: 'auto',
-    ovBy: 'category', nwMode: 'total', nwGran: 'auto', explore: { flow: 'expense', by: 'category' }, flow: { inBy: 'payee', outBy: 'category', transfers: true },
+    ovBy: 'category', nwMode: 'total', nwGran: 'auto', explore: { flow: 'expense', by: 'category' }, flow: { inBy: 'payee', outBy: 'category', transfers: 'side' },
     tx: { kind: 'all', sort: 'date', dir: -1, page: 0, size: 50 }, ui: { search: {}, open: { account: true, category: true } }
   };
   FF.acts = {}; FF.changes = {};
@@ -149,7 +149,7 @@
   change('exBy', v => { S.explore.by = v; });
   change('flowIn', v => { S.flow.inBy = v; });
   change('flowOut', v => { S.flow.outBy = v; });
-  change('flowTr', (v, el) => { S.flow.transfers = el.checked; });
+  change('flowTr', v => { S.flow.transfers = v; });
   change('txKind', v => { S.tx.kind = v; });
   change('cur', v => { S.cur = v; S.range = { preset: 'all', from: null, to: null }; S.dims = freshDims(); });
   change('from', v => { if (v) S.range = { preset: 'custom', from: FF.dayNum(v), to: FF.ctx.to }; });
@@ -215,7 +215,7 @@
     S.range = { preset: 'all', from: null, to: null }; S.dims = freshDims(); S.q = ''; $('#q').value = '';
     const best = FF.bestDim(ds);
     S.ovBy = best; S.explore = { flow: 'expense', by: best }; S.gran = 'auto';
-    S.flow = { inBy: ds.txs.some(t => t.kind === 'income' && !t.srcPh && t.src) ? 'payee' : 'description', outBy: best, transfers: true };
+    S.flow = { inBy: ds.txs.some(t => t.kind === 'income' && !t.srcPh && t.src) ? 'payee' : 'description', outBy: best, transfers: 'side' };
     S.tx = { kind: 'all', sort: 'date', dir: -1, page: 0, size: 50 };
     S.ui = { search: {}, open: { account: true, category: true } };
     S.view = 'overview';
