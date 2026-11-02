@@ -132,11 +132,19 @@
   FF.acts.seg = (d, el) => FF.changes[d.name](d.v, el);
   FF.acts.sort = d => { const T = S.tx; if (T.sort === d.col) T.dir = -T.dir; else { T.sort = d.col; T.dir = d.col === 'date' || d.col === 'amount' ? -1 : 1; } T.page = 0; FF.render(); };
   FF.acts.page = d => { S.tx.page = Math.max(0, +d.p); FF.render(); window.scrollTo(0, 0); };
-  FF.acts.theme = () => {
-    const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-    document.documentElement.dataset.theme = t;
-    try { localStorage.setItem('ff-theme', t); } catch (e) { /* storage unavailable */ }
+  FF.THEMES = ['light', 'dark', 'nord', 'solarized', 'contrast', 'colorblind'];
+  const storedTheme = () => { try { return localStorage.getItem('ff-theme') || 'system'; } catch (e) { return 'system'; } };
+  const resolveTheme = pref => FF.THEMES.indexOf(pref) >= 0 ? pref : (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  FF.setTheme = pref => {
+    try { localStorage.setItem('ff-theme', pref); } catch (e) { /* storage unavailable */ }
+    document.documentElement.dataset.theme = resolveTheme(pref);
+    FF.refreshTheme();
+    FF.render();
   };
+  FF.changes.theme = v => FF.setTheme(v);
+  $('#theme').value = FF.THEMES.indexOf(storedTheme()) >= 0 ? storedTheme() : 'system';
+  matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => { if (storedTheme() === 'system') FF.setTheme('system'); });
+  FF.refreshTheme();
   FF.acts.newFile = () => $('#file').click();
   FF.acts.toggleSidebar = () => document.body.classList.toggle('side-open');
 

@@ -57,6 +57,7 @@ Use the tabs at the top (Overview, Accounts, Cash flow, Spending & income, Insig
 - **Filter** with the panel on the left (period, accounts, categories, tags, bills, budgets) or the search box. Active filters show up as chips at the top that you can remove with one click.
 - **Click** a bar, slice, tile or list entry to filter by it. Every chart updates.
 - **Drag** across a time chart to zoom into that period.
+- **Themes:** pick a look from the menu at the top right: Light, Dark, Nord, Solarized, High contrast or a color-blind safe palette. "System" follows your device setting.
 - **Click a transaction** to see all its details, or use **Export filtered CSV** on the Transactions tab to save what you are looking at.
 
 ## Good to know

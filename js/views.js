@@ -3,8 +3,9 @@
   const esc = FF.esc;
   const U = FF.ui = {};
   const V = FF.views = {};
-  const ACCENT = '#6366f1', GOOD = '#22c55e', BAD = '#f43f5e', INFO = '#38bdf8';
-  FF.COLORS = { accent: ACCENT, good: GOOD, bad: BAD, info: INFO };
+  let ACCENT, GOOD, BAD, INFO;
+  FF.syncColors = () => { ({ accent: ACCENT, good: GOOD, bad: BAD, info: INFO } = FF.COLORS); };
+  FF.syncColors();
 
   /* ---------- shared UI helpers ---------- */
   U.card = o => '<section class="card ' + (o.cls || '') + '"><header class="card-h"><div><h3>' + o.title + '</h3>' +
@@ -76,7 +77,7 @@
       { l: 'Income', v: money(inc), d: U.delta(inc, pInc, true), sp: Bi, color: GOOD },
       { l: 'Expenses', v: money(exp), d: U.delta(exp, pExp, false), sp: Be, color: BAD },
       { l: 'Net saved', v: money(net), d: U.delta(net, pNet, true), sub: 'Savings rate ' + (inc ? FF.pct(net / inc) : '–'), sp: Bi.map((v, i) => v - Be[i]), color: INFO },
-      { l: 'Avg. daily spend', v: money(exp / c.days), sub: expCount + ' expense transaction' + (expCount === 1 ? '' : 's') + ' · ' + c.days + ' days', sp: Be, color: '#f59e0b' }
+      { l: 'Avg. daily spend', v: money(exp / c.days), sub: expCount + ' expense transaction' + (expCount === 1 ? '' : 's') + ' · ' + c.days + ' days', sp: Be, color: FF.COLORS.warn }
     ];
 
     const by = S.ovBy, base = c.ex({ [by]: true }), groups = FF.group(base, by, 'expense');
@@ -207,7 +208,7 @@
     const keep = (kind, dim, n) => new Set(FF.topN(FF.group(c.txs, dim, kind), n).filter(g => !g.other).map(g => g.key));
     const keepIn = keep('income', F.inBy, 8), keepOut = keep('expense', F.outBy, 12);
     const fmt = (v, full) => FF.money(v, cur, false);
-    const SEP = '\u0000', TRANSFER = '#38bdf8', MUTED = '#94a3b8';
+    const SEP = '\u0000', TRANSFER = INFO, MUTED = FF.COLORS.other;
     const add = (m, k, v) => m.set(k, (m.get(k) || 0) + v);
     const incL = new Map(), expL = new Map(), tfG = new Map(), extIn = new Map(), extOut = new Map();
     let incTot = 0, expTot = 0;
@@ -288,8 +289,8 @@
         link(node('L:tf:' + e.s, 'Transfer from ' + e.s, 0, TRANSFER, { special: 1 }), acctNode(e.d), e.v, TRANSFER, tip);
       }
     });
-    extIn.forEach((v, a) => link(node('L:__tin', 'Transfers in (other accounts)', 0, '#64748b', { special: 1 }), acctNode(a), v, '#64748b'));
-    extOut.forEach((v, a) => link(acctNode(a), node('R:__tout', 'Transfers out (other accounts)', R, '#64748b', { special: 1 }), v, '#64748b'));
+    extIn.forEach((v, a) => link(node('L:__tin', 'Transfers in (other accounts)', 0, TRANSFER, { special: 1 }), acctNode(a), v, TRANSFER));
+    extOut.forEach((v, a) => link(acctNode(a), node('R:__tout', 'Transfers out (other accounts)', R, TRANSFER, { special: 1 }), v, TRANSFER));
     accs.forEach(a => {
       const i = inAcc.get(a) || 0, o = outAcc.get(a) || 0;
       if (o > i + 0.005) link(node('L:__bal', 'From existing balance', 0, MUTED, { special: 1 }), acctNode(a), o - i, MUTED);

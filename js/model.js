@@ -272,16 +272,27 @@
   };
 
   /* ---------- colours ---------- */
-  const PALETTE = ['#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6', '#ef4444', '#84cc16', '#3b82f6', '#e879f9'];
+  /* ---------- colours (read from the active CSS theme) ---------- */
+  FF.palette = ['#6366f1', '#22c55e', '#f59e0b', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6', '#14b8a6', '#ef4444', '#84cc16', '#3b82f6', '#e879f9'];
+  FF.COLORS = { accent: '#6366f1', good: '#16a34a', bad: '#e11d48', info: '#0ea5e9', warn: '#d97706', other: '#8a92b2' };
   FF.colorMaps = {};
+  FF.refreshTheme = function () {
+    if (typeof document === 'undefined') return;
+    const cs = getComputedStyle(document.documentElement), v = n => cs.getPropertyValue(n).trim();
+    for (const k of ['accent', 'good', 'bad', 'info', 'warn', 'other']) FF.COLORS[k] = v('--' + k) || FF.COLORS[k];
+    FF.palette = FF.palette.map((d, i) => v('--c' + (i + 1)) || d);
+    FF.colorMaps = {};
+    if (FF.syncColors) FF.syncColors();
+    if (FF.S && FF.S.ds) FF.primeColors(FF.S.ds);
+  };
   FF.color = function (dim, key) {
-    if (key === '' && dim !== 'account') return '#8a92b2';
-    if (key === '__other') return '#8a92b2';
+    if (key === '' && dim !== 'account') return FF.COLORS.other;
+    if (key === '__other') return FF.COLORS.other;
     const m = FF.colorMaps[dim] || (FF.colorMaps[dim] = { map: new Map(), next: 0 });
     let c = m.map.get(key);
     if (!c) {
       const i = m.next++;
-      c = i < PALETTE.length ? PALETTE[i] : 'hsl(' + ((i * 137.5) % 360).toFixed(0) + ' 62% ' + (52 + (i % 3) * 6) + '%)';
+      c = i < FF.palette.length ? FF.palette[i] : 'hsl(' + ((i * 137.5) % 360).toFixed(0) + ' 62% ' + (52 + (i % 3) * 6) + '%)';
       m.map.set(key, c);
     }
     return c;

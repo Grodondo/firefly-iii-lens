@@ -28,7 +28,7 @@
       for (const k of ks) (kset.has(k) ? trend.get(k) : other)[i] += share;
     }
     const tseries = topKeys.map(k => ({ name: D.name(k), color: FF.color(by, k), values: trend.get(k) }));
-    if (g2.length > 8) tseries.push({ name: 'Other', color: '#8a92b2', values: other });
+    if (g2.length > 8) tseries.push({ name: 'Other', color: K.other, values: other });
     const wdCount = new Array(7).fill(0);
     for (let d = c.from; d <= c.to; d++) wdCount[FF.weekday(d)]++;
 
@@ -112,7 +112,7 @@
     ];
 
     root.innerHTML = '<div class="kpis">' + kp.map(U.kpi).join('') + '</div><div class="grid">' +
-      U.card({ cls: 'span-8', title: 'Spending pace · ' + esc(FF.fmtDate(ms, 'month')), sub: 'Cumulative expenses by day of month vs. ' + esc(FF.fmtDate(pms, 'month')), body: '<div id="c-pace"></div><div class="legend"><span>' + U.dot(K.accent) + 'This month</span><span>' + U.dot('#8a92b2') + 'Last month</span></div>' }) +
+      U.card({ cls: 'span-8', title: 'Spending pace · ' + esc(FF.fmtDate(ms, 'month')), sub: 'Cumulative expenses by day of month vs. ' + esc(FF.fmtDate(pms, 'month')), body: '<div id="c-pace"></div><div class="legend"><span>' + U.dot(K.accent) + 'This month</span><span>' + U.dot(K.other) + 'Last month</span></div>' }) +
       U.card({ cls: 'span-4', title: 'Month outlook', body: '<div class="stack-stats"><div><span>Spent so far</span><b>' + esc(money(spentSoFar)) + '</b></div><div><span>Projected month-end</span><b>' + esc(money(projected)) + '</b><small>at the current daily pace (' + elapsed + ' of ' + dim + ' days)</small></div><div><span>Last month total</span><b>' + esc(money(lastTotal)) + '</b>' +
         (lastTotal ? '<small class="' + (projected > lastTotal ? 'neg' : 'pos') + '">' + (projected >= lastTotal ? '▲ ' : '▼ ') + Math.abs((projected - lastTotal) / lastTotal * 100).toFixed(0) + '% vs last month</small>' : '') + '</div></div>' }) +
       U.card({ cls: 'span-12', title: 'Recurring payments', sub: rec.length ? 'Detected from repeating expenses · about ' + esc(money(recMonthly)) + ' per month · ' + esc(money(recMonthly * 12)) + ' per year (ignores the date filter)' : 'Detected from repeating expenses (ignores the date filter)',
@@ -123,7 +123,7 @@
 
     FF.charts.timeSeries(root.querySelector('#c-pace'), {
       xs: pxs, height: 280, zero: true, yFmt: axis, xTick: d => String(d), xFull: d => 'Day ' + d,
-      series: [{ name: FF.fmtDate(pms, 'my'), color: '#8a92b2', values: pad(prevCum, L), dash: '5 4', width: 1.8 }, { name: FF.fmtDate(ms, 'my'), color: K.accent, values: pad(curCum, L), area: false, width: 2.6 }]
+      series: [{ name: FF.fmtDate(pms, 'my'), color: K.other, values: pad(prevCum, L), dash: '5 4', width: 1.8 }, { name: FF.fmtDate(ms, 'my'), color: K.accent, values: pad(curCum, L), area: false, width: 2.6 }]
     });
   };
 
